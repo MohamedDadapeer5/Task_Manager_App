@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.pharma.taskmanager.app-mergeDebugResources-68:/values-v24/values-v24.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\moham\\.gradle\\caches\\8.13\\transforms\\0b1d6652d10f3f3e66006e9c2b6536f7\\transformed\\appcompat-1.6.1\\res\\values-v24\\values-v24.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,212",
+                        "endColumns": "156,134",
+                        "endOffsets": "207,342"
+                    }
+                }
+            ]
+        }
+    ]
+}
