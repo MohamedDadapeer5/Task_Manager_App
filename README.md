@@ -2,7 +2,38 @@
 
 A simple and powerful task management app with **alarm-like reminders** that work even when the app is closed.
 
-## 🚀 Quick Start
+## � Download & Install APK
+
+### 🔗 **Direct Download**
+📱 **[Download APK (Latest Version)](https://github.com/mohameddadapeer1/pharma_apk/releases/latest/download/app-debug.apk)**
+
+*File size: ~16MB | Requires Android 7.0+ (API 24)*
+
+### 📋 **Installation Steps**
+1. **Download** the APK file from the link above
+2. **Enable Unknown Sources**:
+   - Go to Settings → Security → Unknown Sources
+   - Or Settings → Apps → Special Access → Install Unknown Apps
+3. **Open the downloaded APK** file
+4. **Tap "Install"** and wait for installation
+5. **Open the app** and start managing your tasks!
+
+### ⚠️ **Important Notes**
+- **Allow all permissions** when prompted (notifications, alarms, etc.)
+- **Disable battery optimization** for the app to ensure alarms work
+- **Use on physical device** for best alarm functionality
+- The app works offline - no internet required after installation
+
+### 🔔 **First Time Setup**
+After installation:
+1. Open the app
+2. Allow notification permissions
+3. Allow alarm & reminder permissions
+4. Create your first task and test a reminder!
+
+---
+
+## �🚀 Quick Start (For Developers)
 
 ### Requirements
 - **Android Studio** (latest version)
