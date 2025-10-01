@@ -5,7 +5,7 @@ A simple and powerful task management app with **alarm-like reminders** that wor
 ## � Download & Install APK
 
 ### 🔗 **Direct Download**
-📱 **[Download APK (Latest Version)](https://github.com/mohameddadapeer1/pharma_apk/releases/latest/download/app-debug.apk)**
+📱 **[Download APK (Latest Version)](https://github.com/mohameddadapeer1/pharma_apk/raw/main/releases/TaskManager-v1.0.0.apk)**
 
 *File size: ~16MB | Requires Android 7.0+ (API 24)*
 
