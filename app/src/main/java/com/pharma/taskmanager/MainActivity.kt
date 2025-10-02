@@ -29,6 +29,7 @@ import com.pharma.taskmanager.ui.theme.PersonalTaskManagerTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import androidx.core.app.NotificationManagerCompat
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -59,6 +60,14 @@ class MainActivity : ComponentActivity() {
         val initialTaskId = intent?.getIntExtra("task_id", -1) ?: -1
         if (initialTaskId > 0) {
             Log.d("MainActivity", "Launching from notification, task_id=$initialTaskId")
+            // Stop persistent reminder service and clear notification immediately
+            try {
+                val stopIntent = Intent(this, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply { action = "STOP_REMINDER" }
+                startService(stopIntent)
+                NotificationManagerCompat.from(this).cancel(initialTaskId)
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to stop service or cancel notification: ${e.message}")
+            }
             taskIdEvents.tryEmit(initialTaskId)
         }
         
@@ -79,6 +88,13 @@ class MainActivity : ComponentActivity() {
         val taskId = intent?.getIntExtra("task_id", -1) ?: -1
         if (taskId > 0) {
             Log.d("MainActivity", "Received new intent with task_id=$taskId")
+            try {
+                val stopIntent = Intent(this, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply { action = "STOP_REMINDER" }
+                startService(stopIntent)
+                NotificationManagerCompat.from(this).cancel(taskId)
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to stop service or cancel notification: ${e.message}")
+            }
             // Emit so the composable layer can navigate to the task detail
             taskIdEvents.tryEmit(taskId)
         }

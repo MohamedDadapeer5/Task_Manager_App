@@ -110,6 +110,7 @@ class TaskReminderWorker @AssistedInject constructor(
 
         val stopIntent = Intent(applicationContext, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply {
             action = "STOP_REMINDER"
+            putExtra("task_id", inputData.getInt("task_id", -1))
         }
         val stopPendingIntent = PendingIntent.getService(
             applicationContext,

@@ -72,6 +72,7 @@ class NotificationHelper @Inject constructor(private val context: Context) {
         // Stop action to halt persistent reminder service if running
         val stopIntent = Intent(context, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply {
             action = "STOP_REMINDER"
+            putExtra("task_id", taskId.toInt())
         }
         val stopPendingIntent = PendingIntent.getService(
             context,

@@ -18,6 +18,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.pharma.taskmanager.MainActivity
 import com.pharma.taskmanager.R
 import com.pharma.taskmanager.domain.repository.TaskRepository
@@ -53,6 +54,7 @@ class PersistentReminderService : Service() {
     private var vibrator: Vibrator? = null
     private var reminderRunnable: Runnable? = null
     private var stopServiceRunnable: Runnable? = null
+    private var currentTaskId: Int? = null
     
     override fun onCreate() {
         super.onCreate()
@@ -69,6 +71,11 @@ class PersistentReminderService : Service() {
         
         if (intent?.action == "STOP_REMINDER") {
             Log.d(TAG, "🛑 Stop reminder action received")
+            // If a task_id was provided, cancel that notification explicitly
+            val stopId = intent.getIntExtra("task_id", -1)
+            if (stopId > 0) {
+                try { NotificationManagerCompat.from(this).cancel(stopId) } catch (_: Exception) {}
+            }
             stopReminder()
             return START_NOT_STICKY
         }
@@ -79,7 +86,8 @@ class PersistentReminderService : Service() {
             return START_NOT_STICKY
         }
         
-        Log.d(TAG, "📋 Fetching task details from database for ID: $taskId")
+    currentTaskId = taskId
+    Log.d(TAG, "📋 Fetching task details from database for ID: $taskId")
         
         // Fetch task details from database
         serviceScope.launch {
@@ -125,6 +133,10 @@ class PersistentReminderService : Service() {
             // Remove auto-stop callback if pending
             stopServiceRunnable?.let { handler.removeCallbacks(it) }
             stopServiceRunnable = null
+            // Cancel any standard notification that may be showing for this task
+            currentTaskId?.let { id ->
+                try { NotificationManagerCompat.from(this).cancel(id) } catch (_: Exception) {}
+            }
             // Stop foreground and service
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -199,6 +211,7 @@ class PersistentReminderService : Service() {
         
         val stopIntent = Intent(this, PersistentReminderService::class.java).apply {
             action = "STOP_REMINDER"
+            putExtra("task_id", taskId)
         }
         
         val stopPendingIntent = PendingIntent.getService(

@@ -54,14 +54,15 @@ fun TaskDetailScreen(
     // Load task when screen is created or when refresh is triggered
     LaunchedEffect(taskId, refreshTrigger) {
         task = viewModel.getTaskById(taskId)
-        // Also check for overdue reminders when screen loads
-        viewModel.checkAllOverdueReminders()
         // Stop any ongoing persistent reminder when the task view is opened
         try {
             val stopIntent = android.content.Intent(context, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply {
                 action = "STOP_REMINDER"
+                putExtra("task_id", taskId)
             }
             context.startService(stopIntent)
+            // Also dismiss any heads-up/standard notification for this task
+            try { androidx.core.app.NotificationManagerCompat.from(context).cancel(taskId) } catch (_: Exception) {}
         } catch (_: Exception) {}
     }
 
