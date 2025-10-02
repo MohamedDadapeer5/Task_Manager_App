@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.pharma.taskmanager.ui.screens.home.HomeScreen
 import com.pharma.taskmanager.ui.screens.tasks.TaskListScreen
 import com.pharma.taskmanager.ui.screens.tasks.TaskDetailScreen
@@ -55,6 +56,9 @@ fun TaskManagerNavGraph(
                     type = NavType.IntType
                     nullable = false
                 }
+            ),
+            deepLinks = listOf(
+                navDeepLink { uriPattern = "taskmanager://task/{taskId}" }
             )
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getInt("taskId") ?: return@composable

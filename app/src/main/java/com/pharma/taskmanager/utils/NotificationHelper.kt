@@ -58,9 +58,11 @@ class NotificationHelper @Inject constructor(private val context: Context) {
     fun showTaskReminder(taskTitle: String, taskDescription: String, taskId: Long, isCritical: Boolean = false) {
         android.util.Log.d("NotificationHelper", "🔔 Showing task reminder notification for: $taskTitle")
         
-        val intent = Intent(context, MainActivity::class.java).apply {
+        // Use a deep-link style intent so Navigation can route straight to Task Detail
+        val intent = Intent(Intent.ACTION_VIEW).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("task_id", taskId.toInt())
+            data = android.net.Uri.parse("taskmanager://task/${taskId.toInt()}")
+            setPackage(context.packageName)
         }
         val pendingIntent = PendingIntent.getActivity(
             context, 

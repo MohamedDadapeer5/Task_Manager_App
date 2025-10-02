@@ -197,9 +197,11 @@ class PersistentReminderService : Service() {
     }
     
     private fun createPersistentNotification(taskId: Int, taskTitle: String, taskDescription: String = ""): Notification {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            putExtra("task_id", taskId)
+        // Use a deep-link style intent so Navigation routes straight to Task Detail
+        val intent = Intent(Intent.ACTION_VIEW).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            data = Uri.parse("taskmanager://task/$taskId")
+            setPackage(packageName)
         }
         
         val pendingIntent = PendingIntent.getActivity(

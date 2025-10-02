@@ -34,7 +34,8 @@ import androidx.core.app.NotificationManagerCompat
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     // Emits task IDs from notification taps so the composable can navigate accordingly
-    private val taskIdEvents = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = 1)
+    // Use replay=1 so if an event is emitted before Compose starts collecting, it isn't lost.
+    private val taskIdEvents = MutableSharedFlow<Int>(replay = 1, extraBufferCapacity = 1)
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
