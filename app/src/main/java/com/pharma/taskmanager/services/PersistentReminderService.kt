@@ -69,7 +69,7 @@ class PersistentReminderService : Service() {
         
         if (intent?.action == "STOP_REMINDER") {
             Log.d(TAG, "🛑 Stop reminder action received")
-            stopSelf()
+            stopReminder()
             return START_NOT_STICKY
         }
         
@@ -95,12 +95,15 @@ class PersistentReminderService : Service() {
                 startForeground(NOTIFICATION_ID, createPersistentNotification(taskId, taskTitle, taskDescription))
                 
                 // Start continuous reminder pattern (ring + vibrate like alarm)
+                // Stop any previous vibration runnable before starting a new one
+                stopReminderInternal()
                 startContinuousReminder(taskId, taskTitle)
                 
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Error fetching task: ${e.message}", e)
                 // Fallback with basic notification
                 startForeground(NOTIFICATION_ID, createPersistentNotification(taskId, "Task Reminder", ""))
+                stopReminderInternal()
                 startContinuousReminder(taskId, "Task Reminder")
             }
         }
@@ -108,11 +111,42 @@ class PersistentReminderService : Service() {
         // Auto-stop after 1 minute
         stopServiceRunnable = Runnable {
             Log.d(TAG, "⏰ 1 minute elapsed - stopping persistent reminder")
-            stopSelf()
+            stopReminder()
         }
         handler.postDelayed(stopServiceRunnable!!, REMINDER_DURATION)
         
         return START_NOT_STICKY
+    }
+
+    private fun stopReminder() {
+        try {
+            // Cancel callbacks and vibration immediately
+            stopReminderInternal()
+            // Remove auto-stop callback if pending
+            stopServiceRunnable?.let { handler.removeCallbacks(it) }
+            stopServiceRunnable = null
+            // Stop foreground and service
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            Log.d(TAG, "✅ Reminder fully stopped")
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error stopping reminder: ${e.message}")
+            stopSelf()
+        }
+    }
+
+    private fun stopReminderInternal() {
+        try {
+            reminderRunnable?.let { handler.removeCallbacks(it) }
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Error removing reminder runnable: ${e.message}")
+        }
+        reminderRunnable = null
+        try {
+            vibrator?.cancel()
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Error cancelling vibrator: ${e.message}")
+        }
     }
     
     private fun startContinuousReminder(taskId: Int, taskTitle: String) {
@@ -236,12 +270,10 @@ class PersistentReminderService : Service() {
     override fun onDestroy() {
         Log.d(TAG, "🛑 PersistentReminderService destroyed")
         
-        // Clean up handlers
-        reminderRunnable?.let { handler.removeCallbacks(it) }
+        // Clean up handlers and stop vibration immediately
+        stopReminderInternal()
         stopServiceRunnable?.let { handler.removeCallbacks(it) }
-        
-        // Stop vibration
-        vibrator?.cancel()
+        stopServiceRunnable = null
         
         super.onDestroy()
     }

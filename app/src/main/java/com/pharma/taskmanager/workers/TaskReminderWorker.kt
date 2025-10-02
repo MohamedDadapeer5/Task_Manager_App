@@ -99,11 +99,22 @@ class TaskReminderWorker @AssistedInject constructor(
         // Create intent to open the app when notification is tapped
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("task_id", inputData.getInt("task_id", -1))
         }
         val pendingIntent = PendingIntent.getActivity(
             applicationContext,
-            0,
+            inputData.getInt("task_id", 0),
             intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val stopIntent = Intent(applicationContext, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply {
+            action = "STOP_REMINDER"
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            applicationContext,
+            inputData.getInt("task_id", 0) + 1000,
+            stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
@@ -123,6 +134,7 @@ class TaskReminderWorker @AssistedInject constructor(
             .setCategory(NotificationCompat.CATEGORY_ALARM) // Use ALARM for more attention
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(false)
+            .addAction(R.drawable.ic_notification, "Stop Reminder", stopPendingIntent)
             .setFullScreenIntent(pendingIntent, true) // Make it a heads-up notification
             .build()
         

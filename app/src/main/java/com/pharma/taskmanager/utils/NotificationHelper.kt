@@ -69,6 +69,17 @@ class NotificationHelper @Inject constructor(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Stop action to halt persistent reminder service if running
+        val stopIntent = Intent(context, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply {
+            action = "STOP_REMINDER"
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            context,
+            taskId.toInt() + 1000,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notificationId = taskId.toInt()
         
         // Use alarm sound instead of notification sound
@@ -91,6 +102,7 @@ class NotificationHelper @Inject constructor(private val context: Context) {
             .setFullScreenIntent(pendingIntent, true)
             .setOngoing(false) // Allow dismissal
             .setVibrate(longArrayOf(0, 1000, 500, 1000, 500, 1000, 500, 1000)) // Longer vibration
+            .addAction(R.drawable.ic_notification, "Stop Reminder", stopPendingIntent)
             .build()
 
         try {

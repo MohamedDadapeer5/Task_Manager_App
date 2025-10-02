@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
 import com.pharma.taskmanager.data.database.TaskConstants
 import com.pharma.taskmanager.data.database.TaskEntity
 import com.pharma.taskmanager.ui.viewmodel.TaskViewModel
@@ -39,6 +40,7 @@ fun TaskDetailScreen(
     var task by remember { mutableStateOf<TaskEntity?>(null) }
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val context = LocalContext.current
     
     // Local state for dialogs and actions
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -54,6 +56,13 @@ fun TaskDetailScreen(
         task = viewModel.getTaskById(taskId)
         // Also check for overdue reminders when screen loads
         viewModel.checkAllOverdueReminders()
+        // Stop any ongoing persistent reminder when the task view is opened
+        try {
+            val stopIntent = android.content.Intent(context, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply {
+                action = "STOP_REMINDER"
+            }
+            context.startService(stopIntent)
+        } catch (_: Exception) {}
     }
 
     Scaffold(
@@ -241,9 +250,14 @@ fun TaskDetailScreen(
                     },
                     onUpdateReminder = { showReminderUpdateDialog = true },
                     onClearReminder = {
-                        // TODO: Implement clear reminder functionality
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar("Reminder cleared")
+                        // Clear reminder by updating the task and cancelling schedules
+                        task?.let { currentTask ->
+                            coroutineScope.launch {
+                                viewModel.updateTaskReminder(currentTask, null)
+                                // Refresh UI
+                                refreshTrigger++
+                                snackbarHostState.showSnackbar("Reminder removed")
+                            }
                         }
                     }
                 )

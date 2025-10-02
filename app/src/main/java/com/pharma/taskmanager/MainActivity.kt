@@ -27,9 +27,13 @@ import androidx.navigation.compose.rememberNavController
 import com.pharma.taskmanager.navigation.TaskManagerNavGraph
 import com.pharma.taskmanager.ui.theme.PersonalTaskManagerTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    // Emits task IDs from notification taps so the composable can navigate accordingly
+    private val taskIdEvents = MutableSharedFlow<Int>(replay = 0, extraBufferCapacity = 1)
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -51,15 +55,32 @@ class MainActivity : ComponentActivity() {
         // Request exact alarm permission for Android 12+
         requestExactAlarmPermission()
         
+        // If the app was launched from a notification with a task_id, emit it
+        val initialTaskId = intent?.getIntExtra("task_id", -1) ?: -1
+        if (initialTaskId > 0) {
+            Log.d("MainActivity", "Launching from notification, task_id=$initialTaskId")
+            taskIdEvents.tryEmit(initialTaskId)
+        }
+        
         setContent {
             PersonalTaskManagerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    TaskManagerApp()
+                    TaskManagerApp(taskIdEvents = taskIdEvents)
                 }
             }
+        }
+    }
+    
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        val taskId = intent?.getIntExtra("task_id", -1) ?: -1
+        if (taskId > 0) {
+            Log.d("MainActivity", "Received new intent with task_id=$taskId")
+            // Emit so the composable layer can navigate to the task detail
+            taskIdEvents.tryEmit(taskId)
         }
     }
     
@@ -124,9 +145,17 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TaskManagerApp() {
+fun TaskManagerApp(taskIdEvents: Flow<Int>? = null) {
     val navController = rememberNavController()
     
+    // Listen for task_id events (from notification taps) and navigate to Task Detail
+    androidx.compose.runtime.LaunchedEffect(taskIdEvents) {
+        taskIdEvents?.collect { taskId ->
+            Log.d("MainActivity", "Navigating to Task Detail for task_id=$taskId from event")
+            navController.navigate(com.pharma.taskmanager.navigation.Screen.TaskDetail.createTaskDetailRoute(taskId))
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
