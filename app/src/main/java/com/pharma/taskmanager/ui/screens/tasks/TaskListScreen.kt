@@ -204,9 +204,7 @@ fun TaskListScreen(
                         IconButton(onClick = { showSearch = true }) {
                             Icon(Icons.Default.Search, contentDescription = "Search")
                         }
-                        IconButton(onClick = { /* TODO: Show filter menu */ }) {
-                            Icon(Icons.Default.FilterList, contentDescription = "Filter")
-                        }
+                        // Filter button removed per request
                     }
                 }
             )

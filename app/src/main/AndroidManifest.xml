@@ -33,6 +33,16 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Deep link entry for task detail: taskmanager://task/{taskId} -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="taskmanager"
+                    android:host="task"
+                    android:pathPattern="/.*" />
+            </intent-filter>
         </activity>
         
         <!-- BroadcastReceiver for alarm-based reminders -->

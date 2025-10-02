@@ -57,10 +57,14 @@ class MainActivity : ComponentActivity() {
         // Request exact alarm permission for Android 12+
         requestExactAlarmPermission()
         
-        // If the app was launched from a notification with a task_id, emit it
-        val initialTaskId = intent?.getIntExtra("task_id", -1) ?: -1
+        // If the app was launched from a deep link or notification with a task_id, emit it
+        val initialTaskIdFromExtra = intent?.getIntExtra("task_id", -1) ?: -1
+        val initialTaskIdFromLink = if (intent?.action == Intent.ACTION_VIEW) {
+            try { intent?.data?.lastPathSegment?.toIntOrNull() ?: -1 } catch (_: Exception) { -1 }
+        } else -1
+        val initialTaskId = if (initialTaskIdFromLink > 0) initialTaskIdFromLink else initialTaskIdFromExtra
         if (initialTaskId > 0) {
-            Log.d("MainActivity", "Launching from notification, task_id=$initialTaskId")
+            Log.d("MainActivity", "Launching from intent, task_id=$initialTaskId (link=${initialTaskIdFromLink > 0})")
             // Stop persistent reminder service and clear notification immediately
             try {
                 val stopIntent = Intent(this, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply { action = "STOP_REMINDER" }
@@ -86,7 +90,11 @@ class MainActivity : ComponentActivity() {
     
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        val taskId = intent?.getIntExtra("task_id", -1) ?: -1
+        val fromExtra = intent?.getIntExtra("task_id", -1) ?: -1
+        val fromLink = if (intent?.action == Intent.ACTION_VIEW) {
+            try { intent.data?.lastPathSegment?.toIntOrNull() ?: -1 } catch (_: Exception) { -1 }
+        } else -1
+        val taskId = if (fromLink > 0) fromLink else fromExtra
         if (taskId > 0) {
             Log.d("MainActivity", "Received new intent with task_id=$taskId")
             try {
