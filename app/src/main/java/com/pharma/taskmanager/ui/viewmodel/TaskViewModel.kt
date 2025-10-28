@@ -143,7 +143,16 @@ class TaskViewModel @Inject constructor(
                 
                 val result = taskUseCases.updateTask.toggleTaskCompletion(taskId)
                 result.fold(
-                    onSuccess = { /* Status toggled successfully */ },
+                    onSuccess = {
+                        // After toggling completion we should cancel any scheduled reminders
+                        // and stop any currently ringing persistent reminder for this task.
+                        try {
+                            reminderScheduler.cancelReminder(taskId)
+                        } catch (_: Exception) {}
+                        try {
+                            reminderScheduler.stopActiveReminder(taskId)
+                        } catch (_: Exception) {}
+                    },
                     onFailure = { error -> _error.value = "Failed to toggle task status: ${error.message}" }
                 )
             } catch (e: Exception) {

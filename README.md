@@ -162,7 +162,7 @@ android-app/
 ### First Time Setup
 ```bash
 # 1. Clone the project
-git clone <your-repo-url>
+git clone <https://github.com/MohamedDadapeer5/Task_Manager_App>
 cd android-app
 
 # 2. Open in Android Studio

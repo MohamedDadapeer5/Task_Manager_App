@@ -131,6 +131,28 @@ class ReminderScheduler @Inject constructor(
         alarmReminderScheduler.cancelReminder(taskId)
         Log.d(TAG, "🚫 Cancelled all reminders (WorkManager + AlarmManager) for task $taskId")
     }
+
+    /**
+     * Stop any active/persisting reminder for a task. This cancels scheduled triggers
+     * and sends a STOP intent to the foreground PersistentReminderService so any
+     * currently ringing reminder will stop immediately.
+     */
+    fun stopActiveReminder(taskId: Int) {
+        // Cancel scheduled reminders first
+        cancelReminder(taskId)
+
+        try {
+            val stopIntent = android.content.Intent(context, com.pharma.taskmanager.services.PersistentReminderService::class.java).apply {
+                action = "STOP_REMINDER"
+                putExtra("task_id", taskId)
+            }
+            // Use startService to deliver the intent to the service (no binding needed)
+            context.startService(stopIntent)
+            Log.d(TAG, "🛑 Sent STOP_REMINDER to PersistentReminderService for task $taskId")
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Failed to send STOP_REMINDER intent: ${e.message}")
+        }
+    }
     
     /**
      * Update a reminder - cancels the old one and schedules a new one

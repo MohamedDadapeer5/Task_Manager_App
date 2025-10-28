@@ -64,10 +64,10 @@ com.pharma.taskmanager.app-jetified-ui-text-release-62 C:\Users\moham\.gradle\ca
 com.pharma.taskmanager.app-jetified-activity-ktx-1.8.2-63 C:\Users\moham\.gradle\caches\8.13\transforms\edcac0ade17210935b48f7f6fcf20827\transformed\jetified-activity-ktx-1.8.2\res
 com.pharma.taskmanager.app-room-runtime-2.6.1-64 C:\Users\moham\.gradle\caches\8.13\transforms\f3c85b3947a2e83fb672bfccb8719478\transformed\room-runtime-2.6.1\res
 com.pharma.taskmanager.app-jetified-lifecycle-runtime-ktx-2.7.0-65 C:\Users\moham\.gradle\caches\8.13\transforms\f7e00177dc19dd7d4b314d9eb4fb1444\transformed\jetified-lifecycle-runtime-ktx-2.7.0\res
-com.pharma.taskmanager.app-resValues-66 C:\Users\moham\Documents\1_Pharma\android-app\app\build\generated\res\resValues\debug
-com.pharma.taskmanager.app-updated_navigation_xml-67 C:\Users\moham\Documents\1_Pharma\android-app\app\build\generated\updated_navigation_xml\debug
-com.pharma.taskmanager.app-packageDebugResources-68 C:\Users\moham\Documents\1_Pharma\android-app\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
-com.pharma.taskmanager.app-packageDebugResources-69 C:\Users\moham\Documents\1_Pharma\android-app\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
-com.pharma.taskmanager.app-debug-70 C:\Users\moham\Documents\1_Pharma\android-app\app\build\intermediates\merged_res\debug\mergeDebugResources
-com.pharma.taskmanager.app-debug-71 C:\Users\moham\Documents\1_Pharma\android-app\app\src\debug\res
-com.pharma.taskmanager.app-main-72 C:\Users\moham\Documents\1_Pharma\android-app\app\src\main\res
+com.pharma.taskmanager.app-resValues-66 C:\Users\moham\Documents\Projects\1_Pharma\android-app\app\build\generated\res\resValues\debug
+com.pharma.taskmanager.app-updated_navigation_xml-67 C:\Users\moham\Documents\Projects\1_Pharma\android-app\app\build\generated\updated_navigation_xml\debug
+com.pharma.taskmanager.app-packageDebugResources-68 C:\Users\moham\Documents\Projects\1_Pharma\android-app\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.pharma.taskmanager.app-packageDebugResources-69 C:\Users\moham\Documents\Projects\1_Pharma\android-app\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.pharma.taskmanager.app-debug-70 C:\Users\moham\Documents\Projects\1_Pharma\android-app\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.pharma.taskmanager.app-debug-71 C:\Users\moham\Documents\Projects\1_Pharma\android-app\app\src\debug\res
+com.pharma.taskmanager.app-main-72 C:\Users\moham\Documents\Projects\1_Pharma\android-app\app\src\main\res

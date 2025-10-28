@@ -16,6 +16,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.media.MediaPlayer
+import android.media.AudioAttributes as MediaAudioAttributes
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -48,12 +50,15 @@ class PersistentReminderService : Service() {
         private const val REMINDER_DURATION = 60000L // 1 minute
         private const val VIBRATION_INTERVAL = 2000L // Every 2 seconds
         private const val SOUND_INTERVAL = 3000L // Every 3 seconds
+        private const val FADE_DURATION = 3000L // Fade-out duration in ms
     }
     
     private val handler = Handler(Looper.getMainLooper())
     private var vibrator: Vibrator? = null
+    private var mediaPlayer: MediaPlayer? = null
     private var reminderRunnable: Runnable? = null
     private var stopServiceRunnable: Runnable? = null
+    private var fadeRunnable: Runnable? = null
     private var currentTaskId: Int? = null
     
     override fun onCreate() {
@@ -102,10 +107,12 @@ class PersistentReminderService : Service() {
                 // Start foreground service with notification
                 startForeground(NOTIFICATION_ID, createPersistentNotification(taskId, taskTitle, taskDescription))
                 
-                // Start continuous reminder pattern (ring + vibrate like alarm)
+                // Start continuous reminder pattern (vibrate like alarm)
                 // Stop any previous vibration runnable before starting a new one
                 stopReminderInternal()
                 startContinuousReminder(taskId, taskTitle)
+                // Start a single continuous alarm sound for the duration with a smooth fade-out
+                startAlarmSoundWithFade()
                 
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Error fetching task: ${e.message}", e)
@@ -130,6 +137,8 @@ class PersistentReminderService : Service() {
         try {
             // Cancel callbacks and vibration immediately
             stopReminderInternal()
+            // Stop and release any media player
+            stopAndReleaseMediaPlayer()
             // Remove auto-stop callback if pending
             stopServiceRunnable?.let { handler.removeCallbacks(it) }
             stopServiceRunnable = null
@@ -159,6 +168,20 @@ class PersistentReminderService : Service() {
         } catch (e: Exception) {
             Log.w(TAG, "⚠️ Error cancelling vibrator: ${e.message}")
         }
+        // Also stop any alarm sound and cancel fade callbacks
+        try {
+            fadeRunnable?.let { handler.removeCallbacks(it) }
+            fadeRunnable = null
+
+            mediaPlayer?.let {
+                if (it.isPlaying) it.stop()
+                it.reset()
+                it.release()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Error stopping media player: ${e.message}")
+        }
+        mediaPlayer = null
     }
     
     private fun startContinuousReminder(taskId: Int, taskTitle: String) {
@@ -194,6 +217,83 @@ class PersistentReminderService : Service() {
         
         // Start immediately
         handler.post(reminderRunnable!!)
+    }
+
+    /**
+     * Play a single continuous alarm sound and schedule a smooth fade-out before the
+     * overall reminder timeout so the sound stops gracefully after REMINDER_DURATION.
+     */
+    private fun startAlarmSoundWithFade() {
+        try {
+            if (mediaPlayer != null && mediaPlayer!!.isPlaying) return
+
+            val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    MediaAudioAttributes.Builder()
+                        .setUsage(MediaAudioAttributes.USAGE_ALARM)
+                        .setContentType(MediaAudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                setDataSource(this@PersistentReminderService, alarmUri)
+                // Play continuously until we fade and stop it
+                isLooping = true
+                setOnPreparedListener { mp ->
+                    try {
+                        mp.setVolume(1.0f, 1.0f)
+                        mp.start()
+                        Log.d(TAG, "🔊 Alarm sound started (continuous)")
+
+                        // Schedule fade-out to start FADE_DURATION before the overall timeout
+                        val fadeStartDelay = (REMINDER_DURATION - FADE_DURATION).coerceAtLeast(0L)
+                        fadeRunnable = Runnable {
+                            try {
+                                Log.d(TAG, "🎚️ Starting fade-out for alarm sound")
+                                // Fade over FADE_DURATION in small steps
+                                val steps = 30
+                                val stepDelay = FADE_DURATION / steps
+                                for (i in 1..steps) {
+                                    val fraction = 1.0f - (i.toFloat() / steps.toFloat())
+                                    handler.postDelayed({ mediaPlayer?.setVolume(fraction, fraction) }, stepDelay * i)
+                                }
+                                // Ensure final stop after fade completes
+                                handler.postDelayed({
+                                    try {
+                                        stopAndReleaseMediaPlayer()
+                                        Log.d(TAG, "🔇 Alarm sound faded and stopped")
+                                    } catch (e: Exception) {
+                                        Log.w(TAG, "⚠️ Error stopping after fade: ${e.message}")
+                                    }
+                                }, FADE_DURATION)
+                            } catch (e: Exception) {
+                                Log.w(TAG, "⚠️ Error during fade runnable: ${e.message}")
+                            }
+                        }
+
+                        handler.postDelayed(fadeRunnable!!, fadeStartDelay)
+
+                    } catch (e: Exception) {
+                        Log.e(TAG, "❌ Failed to start media player: ${e.message}", e)
+                    }
+                }
+                prepareAsync()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error preparing alarm sound: ${e.message}", e)
+        }
+    }
+
+    private fun stopAndReleaseMediaPlayer() {
+        try {
+            mediaPlayer?.let { mp ->
+                if (mp.isPlaying) mp.stop()
+                mp.reset()
+                mp.release()
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "⚠️ Error releasing media player: ${e.message}")
+        }
+        mediaPlayer = null
     }
     
     private fun createPersistentNotification(taskId: Int, taskTitle: String, taskDescription: String = ""): Notification {
@@ -249,8 +349,8 @@ class PersistentReminderService : Service() {
                 "Stop Reminder",
                 stopPendingIntent
             )
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
-            .setDefaults(NotificationCompat.DEFAULT_SOUND)
+            // Notification itself remains silent here; we play alarm via MediaPlayer for
+            // a single continuous sound so we avoid duplicate/overlapping system notification sounds.
             .build()
     }
     
@@ -264,13 +364,8 @@ class PersistentReminderService : Service() {
                 description = "Continuous reminders that ring and vibrate for 1 minute"
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 500, 200, 500)
-                setSound(
-                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
+                // Make channel silent — we control alarm sound via MediaPlayer to avoid duplicate rings
+                setSound(null, null)
                 setShowBadge(true)
                 enableLights(true)
             }
